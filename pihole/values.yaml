@@ -1,0 +1,260 @@
+image:
+  repository: "pihole/pihole"
+  tag: "latest"
+  pullPolicy: Always
+
+ingress:
+  enabled: false
+  hosts:
+  - pihole.example.com
+
+serviceWeb:
+  loadBalancerIP: <IP ADDRESS> # Example: 192.168.0.11
+  annotations:
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+  type: LoadBalancer
+
+adminPassword: "<PASSWORD HERE>"
+
+serviceDns:
+  loadBalancerIP: <IP ADDRESS> # Example: 192.168.0.11
+  annotations:
+    metallb.universe.tf/allow-shared-ip: pihole-svc
+  type: LoadBalancer
+
+doh:
+  enabled: true
+  pullPolicy: Always
+  envVars:
+    DOH_UPSTREAM: "https://1.1.1.1/dns-query"
+
+dnsmasq:
+  customDnsEntries:
+  # Examples:
+    - address=/sonarr.home.idontknow.pro/192.168.0.2
+    - address=/radarr.home.idontknow.pro/192.168.0.2
+    - address=/torrent.home.idontknow.pro/192.168.0.3
+    - address=/plex.home.idontknow.pro/192.168.0.2
+    - address=/pihole.home.idontknow.pro/192.168.0.11
+    - address=/gateway.home.idontknow.pro/192.168.0.1
+    - address=/k3sprimary.home.idontknow.pro/192.168.0.5
+    - address=/k3snode1.home.idontknow.pro/192.168.0.6
+    - address=/k3snode2.home.idontknow.pro/192.168.0.7
+    - address=/k3snode3.home.idontknow.pro/192.168.0.8
+    - address=/k3snode4.home.idontknow.pro/192.168.0.9
+    - address=/lagunahills.asuscomm.com/192.168.0.1
+    - address=/dc01.home.idontknow.pro/192.168.0.16
+    - address=/ca01.home.idontknow.pro/192.168.0.17
+    - address=/portainer.home.idontknow.pro/192.168.0.12
+    - address=/hb.home.idontknow.pro/192.168.0.5
+    - address=/argocd.home.idontknow.pro/192.168.0.13
+    - address=/torrent.home.idontknow.pro/192.168.0.2
+
+  additionalHostsEntries:
+    - 192.168.0.1     gateway
+    - 192.168.0.5     k3sprimary
+    - 192.168.0.6     k3snode1
+    - 192.168.0.7     k3snode2
+    - 192.168.0.8     k3snode3
+    - 192.168.0.9     k3snode4
+    - 192.168.0.16    dc01
+    - 192.168.0.17    ca01
+    - 192.168.0.2     2019-MBP-Server-LAN
+    - 192.168.0.3     2019-MBP-Server-Wifi
+    - 192.168.0.11    pihole
+
+adlists:
+  - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+  - https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Spam/hosts
+  - https://v.firebog.net/hosts/static/w3kbl.txt
+  - https://adaway.org/hosts.txt
+  - https://v.firebog.net/hosts/AdguardDNS.txt
+  - https://v.firebog.net/hosts/Admiral.txt
+  - https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt
+  - https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+  - https://v.firebog.net/hosts/Easylist.txt
+  - https://osint.digitalside.it/Threat-Intel/lists/latestdomains.txt
+  - https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt
+  - https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt
+  - https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.2o7Net/hosts
+  - https://v.firebog.net/hosts/Prigent-Ads.txt
+  - https://v.firebog.net/hosts/Easyprivacy.txt
+  - https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/UncheckyAds/hosts
+  - https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts
+  - https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt
+  - https://v.firebog.net/hosts/Prigent-Crypto.txt
+  - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Risk/hosts
+  - https://phishing.army/download/phishing_army_blocklist_extended.txt
+  - https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-malware.txt
+  - https://v.firebog.net/hosts/RPiList-Malware.txt
+  - https://v.firebog.net/hosts/RPiList-Phishing.txt
+  - https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt
+  - https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts
+  - https://paulgb.github.io/BarbBlock/blacklists/hosts-file.txt
+  - https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt
+  - https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt
+  - https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt
+  - https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts
+  - https://raw.githubusercontent.com/matomo-org/referrer-spam-blacklist/master/spammers.txt
+  - https://someonewhocares.org/hosts/zero/hosts
+  - https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts
+  - https://winhelp2002.mvps.org/hosts.txt
+  - https://v.firebog.net/hosts/neohostsbasic.txt
+  - https://raw.githubusercontent.com/RooneyMcNibNug/pihole-stuff/master/SNAFU.txt
+  - https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt
+  - https://raw.githubusercontent.com/chadmayfield/my-pihole-blocklists/master/lists/pi_blocklist_porn_top1m.list
+  - https://v.firebog.net/hosts/Prigent-Adult.txt
+  - https://github.com/NethServer/dns-community-blacklist/blob/master/easylist.dns
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/pro.plus.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/pro.plus.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro.plus-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro.plus.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/fake.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/tif.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/tif.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/fake-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nosafesearch.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nosafesearch-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/dyndns.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/dyndns-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/hoster-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/hoster.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/gambling.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.vivo.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.lgwebos.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.tiktok.extended.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.tiktok.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.winoffice.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.huawei.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/native.amazon.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.amazon.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/gambling-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/native.oppo-realme.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.amazon-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.amazon.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/native.tiktok.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/native.tiktok.extended.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok.extended-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok.extended.txt
+
+
+whitelist:
+  - www.bit.ly
+  - bit.ly
+  - ow.ly
+  - tinyurl.com
+  - cdn.optimizely.com
+  - split.io
+  - s.shopify.com
+  - target.walgreens.com
+  - thepiratebay.org
+  - telemetry.gfe.nvidia.com
+  - logging.api.intuit.com
+  - events.split.io
+  - cdn.split.io
+  - heapanalytics.com
+  - api2.amplitude.com
+  - collegeboard.org.ssl.d1.sc.omtrdc.net
+  - sdk.split.io
+  - auth.split.io
+  - cdn.heapanalytics.com
+  - strack.collegeboard.org
+  - rum.api.intuit.com
+  - eventbus.intuit.com
+  - s.click.aliexpress.com
+  - firebaselogging-pa.googleapis.com
+  - 3e6281cdf7991c82a612a2d3891ca86ada88e22c.cws.conviva.com
+  - analytics-ingestion.production-public.tubi.io
+  - uapi.adrise.tv
+  - v20.events.data.microsoft.com
+  - settings-win.data.microsoft.com
+  - v10.events.data.microsoft.com
+  - smetrics.aem.playstation.com
+  - telemetry-console.api.playstation.com
+  - telemetry.api.playstation.com
+  - c.msn.com
+  - srtb.msn.com
+  - browser.events.data.msn.com
+  - s.adrise.tv
+  - assets.huluim.com
+  - umwatson.events.data.microsoft.com
+  - info.microsoft.com
+  - dc.services.visualstudio.com
+  - browser.pipe.aria.microsoft.com
+  - mobile.events.data.microsoft.com
+  - config.fp.measure.office.com
+  - js.monitor.azure.com
+  - browser.events.data.microsoft.com
+  - upload.fp.measure.office.com
+  - upload2.fp.measure.office.com
+  - cdn.cookielaw.org
+  - vortex.hulu.com
+  - doppler.hulu.com
+  - fbsbx.com
+  - fbcdn.net
+  - static.xx.fbcdn.net
+  - star-mini.c10r.facebook.com
+  - facebook.com
+  - www.facebook.com
+  - web.facebook.com
+  - mobile-collector.newrelic.com.cdn.cloudflare.net
+  - mobile-collector.newrelic.com
+  - open.free-tracker.ga
+  - retracker.lanta-net.ru
+  - torrent-tracker.ru
+  - tracker-udp.gbitt.info
+  - tracker.bittor.pw
+  - tracker.mgtracker.org
+  - tracker.tvunderground.org.ru
+  - tracker.christianbro.pw
+  - tracker.cypherpunks.ru
+  - coppersurfer.tk
+  - browser-intake-datadoghq.com
+  - www.clarity.ms
+  - watch.primescreenstreams.com
+  - trk2.magixflix.club
+  - tracker.nwps.ws
+  - trk.bestmoviesflix.xyz
+  - metrics.icloud.com
+  - gs-loc.apple.com
+  - api.smoot.apple.com
+  - iphonesubmissions.apple.com
+
+blacklist:
+   - tp-link.com
+   - ecx.images-amazon.com
+   - cf-st.sc-cdn.net
+
+regex:
+  - ^(.+[_.-])?(ads?(erv(er?|ice)?s?|im(age|g)s?|track(er|ing)?|vert(s|is(ing|ements?))?)?|aff(iliat(es?|ion))?|analytics?|banners?|beacons?|count(ers?)?|mads|pixels?|stat(s|istics)?)[0-9]*[_.-]
+  - ^(ads|logs|cloudservices).roku.com$
+  - ^https?://([A-Za-z0-9.-]*\.)?(clicks\.beap\.bc\.yahoo\.com|secure\.footprint\.net|match\.com|sitescout|appnexus|evidon|mediamath|scorecardresearch|doubleclick|flashtalking|turn|mathtag|googlesyndication|s\.yimg\.com/cv/ae/us/audience|yieldmanager|w55c|adnxs|advertising|flashtalking|turn|mathtag|surveylink|info\.yahoo|ads\.yahoo|global\.ard\.yahoo|(.+)\.g00)(\.\w{2}\.\w{2}|\.\w{2,4})?/
+  - (^|\.)((xn--.*)|buffpanel\.com|bugsnag\.com|redshell\.io|treasuredata\.com|unity(|3d)\.com|unityads(|\.co)\.com|g00\..*|ad.*\.doubleclick\.net)$
+  - \.(ru|cn|ml|ga|gq|cf|tk|pw|ua|ug|ve|info|site|club|host|party)$
+
+ftl:
+  BLOCK_ICLOUD_PR: true
+  SHOW_DNSSEC: true
+  DELAY_STARTUP: 60
+  IGNORE_LOCALHOST: yes
+  PIHOLE_PTR: HOSTNAME
+  REFRESH_HOSTNAMES: ALL
+  PARSE_ARP_CACHE: true
+
+podDnsConfig:
+  enabled: true
+  policy: "None"
+  nameservers:
+    - 127.0.0.1
+    - 1.1.1.1
