@@ -28,11 +28,11 @@
 - Add the following configuration for each node:
   ```bash
   interface eth0
-  static ip_address=192.168.50.XX/24
-  static routers=192.168.50.1
-  static domain_name_servers=192.168.50.1 1.1.1.1 8.8.8.8
+  static ip_address=192.168.0.XX/24
+  static routers=192.168.1
+  static domain_name_servers=192.168.0.1 1.1.1.1 8.8.8.8
   ```
-- Replace `192.168.50.XX` with the desired static IP.
+- Replace `192.168.0.XX` with the desired static IP.
 
 #### 4. Disable Swap
 - Turn off swap temporary:
@@ -72,5 +72,5 @@
   ```
 - Use the token to join worker nodes:
   ```bash
-  curl -sfL https://get.k3s.io | K3S_URL=https://192.168.50.5:6443 K3S_TOKEN=<YOUR-NODE-TOKEN> sh -
+  curl -sfL https://get.k3s.io | K3S_URL=https://192.168.0.5:6443 K3S_TOKEN=<YOUR-NODE-TOKEN> sh -
   ```
