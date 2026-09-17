@@ -7,95 +7,115 @@
 
 # seerr values
 
-env: 
-  TZ: America/New York
-  PORT: 5055
+replicaCount: 1
 
-image: 
-  tag: v3.2.0
+# Container image. The default tag is pinned instead of using latest so chart
+# installs are repeatable.
+image:
+  repository: ghcr.io/seerr-team/seerr
+  tag: "v3.2.0"
   pullPolicy: IfNotPresent
-  repository: "ghcr.io/seerr-team/seerr"
 
-media: 
-  mounts: []
-  enabled: false
-  readOnly: false
-  mountPath: /vault
-  existingClaim: ""
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
-ingress:
-  # -- Enable and configure ingress settings for the chart under this key.
-  # @default -- See values.yaml
-  main:
-    enabled: true
-    annotations:
-      kubernetes.io/ingress.class: traefik
-      ingressClassName: "traefik"
-    hosts:
-      -
-        host: request.idontknow.pro
-        paths:
-          -
-            path: /
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
 
+# Non-secret application environment variables.
+env:
+  TZ: America/New York
+  PORT: "5055"
+
+# Main HTTP service for the Seerr web UI/API.
 service:
-  main:
-    ports:
-      http:
-        port: 5055
+  type: ClusterIP
+  port: 5055
+  targetPort: 5055
+  portName: http
+  extraPorts: []
 
-httpRoute: 
-  rules: 
-    matches: 
-      - path: 
-          type: PathPrefix
-          value: /
-  enabled: false
-  hostnames: []
-  parentRefs: []
+extraContainerPorts: []
 
-hostDevices: 
-  devices: []
-  enabled: false
-
+# Persistent application configuration. Seerr stores its app data under
+# /app/config.
 persistence:
   config:
     enabled: true
-    type: pvc
-    storageClass: "local-path"
-    size: 1Gi
     mountPath: /app/config
+    existingClaim: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+    storageClassName: "local-path"
 
-tolerations: []
+# Generic media mount support. Seerr usually talks to Jellyfin/*arr services
+# over HTTP and does not need direct media storage.
+media:
+  enabled: false
+  existingClaim: ""
+  mountPath: /vault
+  readOnly: false
+  mounts: []
 
+# Seerr usually does not need host devices, but the generic chart supports them
+# for advanced use cases.
+hostDevices:
+  enabled: false
+  devices: []
+
+# Advanced volume hooks for custom mounts that are not covered above.
 extraVolumes: []
+extraVolumeMounts: []
 
-nameOverride: ""
+# Optional Kubernetes Ingress for exposing the web UI/API.
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    kubernetes.io/ingress.class: traefik
+  hosts:
+    - host: request.idontknow.pro
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
 
-replicaCount: 1
+# Optional Gateway API HTTPRoute for exposing the web UI/API.
+httpRoute:
+  enabled: false
+  annotations: {}
+  parentRefs: []
+  hostnames: []
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
 
-livenessProbe: 
-  httpGet: 
+resources: {}
+
+livenessProbe:
+  httpGet:
     path: /api/v1/settings/public
     port: http
+  initialDelaySeconds: 30
   periodSeconds: 30
   timeoutSeconds: 5
   failureThreshold: 3
-  initialDelaySeconds: 30
 
-readinessProbe: 
-  httpGet: 
+readinessProbe:
+  httpGet:
     path: /api/v1/settings/public
     port: http
+  initialDelaySeconds: 20
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 3
-  initialDelaySeconds: 20
 
-fullnameOverride: ""
-
-imagePullSecrets: []
-
-extraVolumeMounts: []
-
-extraContainerPorts: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
