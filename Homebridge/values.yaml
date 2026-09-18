@@ -2,6 +2,7 @@
 # helm repo update
 # kubectl create ns homebridge
 # helm upgrade --install homebridge k8s-at-home/homebridge -n homebridge -f values.yaml
+# https://staging.artifacthub.io/packages/helm/k8s-at-home/homebridge
 # IMPORTANT NOTE
 # This chart inherits from our common library chart. You can check the default values/options here:
 # https://github.com/k8s-at-home/library-charts/tree/main/charts/stable/common/values.yaml
