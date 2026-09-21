@@ -116,7 +116,6 @@ adlists:
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif-onlydomains.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/tif.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads-onlydomains.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/fake-onlydomains.txt
