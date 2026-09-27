@@ -1,69 +1,148 @@
-# https://artifacthub.io/packages/helm/mojo2600/pihole
+# https://artifacthub.io/packages/helm/mojo2600/pihole   (chart 2.38.x, Pi-hole v6)
+#
+# Dual-stack Pi-hole: IPv4 VIP 192.168.50.11 + IPv6 VIP fde0:3fac:9670:50::11 via MetalLB.
+# REQUIRES a dual-stack k3s cluster. On an IPv4-only cluster the "-ipv6" Services are rejected
+# by the API server and the whole helm install/upgrade fails. See the chat notes.
 
 image:
   repository: "pihole/pihole"
-  tag: "latest"
+  tag: "latest"            # consider pinning (e.g. "2026.07.2") so upgrades happen when you choose
   pullPolicy: Always
+
+# --- IPv6 ----------------------------------------------------------------------------------------
+# With type LoadBalancer the chart creates separate SingleStack IPv6 Services
+# (<release>-dns-tcp-ipv6, -dns-udp-ipv6, -web-ipv6) that use the loadBalancerIPv6 values below.
+dualStack:
+  enabled: true
 
 ingress:
   enabled: false
   hosts:
-  - pihole.example.com
+  - pihole.home.idontknow.pro
 
 serviceWeb:
-  loadBalancerIP: <IP ADDRESS> # Example: 192.168.0.11
+  type: LoadBalancer
+  loadBalancerIP: 192.168.50.11
+  loadBalancerIPv6: "fde0:3fac:9670:50::11"
   annotations:
     metallb.universe.tf/allow-shared-ip: pihole-svc
-  type: LoadBalancer
-
-adminPassword: "<PASSWORD HERE>"
 
 serviceDns:
-  loadBalancerIP: <IP ADDRESS> # Example: 192.168.0.11
+  type: LoadBalancer
+  loadBalancerIP: 192.168.50.11
+  loadBalancerIPv6: "fde0:3fac:9670:50::11"
   annotations:
     metallb.universe.tf/allow-shared-ip: pihole-svc
-  type: LoadBalancer
 
+# The chart creates a DHCP LoadBalancer by default (plus an IPv6 one when dualStack is on).
+# You don't use Pi-hole for DHCP, and those Services would grab extra MetalLB addresses.
+serviceDhcp:
+  enabled: false
+
+# --- Admin password ------------------------------------------------------------------------------
+# The old password was shared in chat, so change it. Keep it in a Secret, not in this file:
+#   kubectl -n <namespace> create secret generic pihole-admin --from-literal=password='<new password>'
+#admin:
+#  enabled: true
+#  existingSecret: "pihole-admin"
+#  passwordKey: "password"
+adminPassword: "DimeTent7!"
+# --- Upstream: DoH via cloudflared ----------------------------------------------------------------
+# The chart points Pi-hole at 127.0.0.1#5053 automatically when doh.enabled is true.
+# crazymax/cloudflared reads TUNNEL_DNS_UPSTREAM. DOH_UPSTREAM was being ignored.
 doh:
   enabled: true
   pullPolicy: Always
   envVars:
-    DOH_UPSTREAM: "https://1.1.1.1/dns-query"
+    TUNNEL_DNS_UPSTREAM: "https://1.1.1.1/dns-query,https://1.0.0.1/dns-query"
+
+# --- Pi-hole v6 settings (FTLCONF_<section>_<key>) --------------------------------------------------
+extraEnvVars:
+  # Must be ALL in Kubernetes: queries arrive from LAN/node addresses, not the pod's own subnet.
+  FTLCONF_dns_listeningMode: "all"
+  # Answer pi.hole / the pod hostname with the VIPs, not the pod IP (10.42.x / pod IPv6)
+  FTLCONF_dns_reply_host_force4: "true"
+  FTLCONF_dns_reply_host_IPv4: "192.168.50.11"
+  FTLCONF_dns_reply_host_force6: "true"
+  FTLCONF_dns_reply_host_IPv6: "fde0:3fac:9670:50::11"
+  # Reverse lookups / local names to the XT8 (IPv4 + the ULA /64). Arrays are ';'-separated.
+  FTLCONF_dns_revServers: "true,192.168.50.0/24,192.168.50.1,home.idontknow.pro;true,fde0:3fac:9670:50::/64,192.168.50.1,home.idontknow.pro"
+  FTLCONF_dns_domainNeeded: "true"
+  # Encrypted-DNS bypass blocks (these are the defaults, kept explicit)
+  FTLCONF_dns_specialDomains_mozillaCanary: "true"
+  FTLCONF_dns_specialDomains_iCloudPrivateRelay: "true"
+  FTLCONF_dns_specialDomains_designatedResolver: "true"
+
+# Your old ftl: block used Pi-hole v5 names (BLOCK_ICLOUD_PR, DELAY_STARTUP, ...).
+# Pi-hole v6 ignores those, so they're translated to v6 keys here. The chart prefixes each key with FTLCONF_.
+ftl:
+  misc_delay_startup: "60"
+  dns_ignoreLocalhost: "true"
+  dns_piholePTR: "HOSTNAME"
+  dns_showDNSSEC: "true"
+  resolver_refreshNames: "ALL"
+  database_network_parseARPcache: "true"
+
+podDnsConfig:
+  enabled: true
+  policy: "None"
+  nameservers:
+    - 127.0.0.1
+    - 1.1.1.1
 
 dnsmasq:
   customDnsEntries:
-  # Examples:
-    - address=/sonarr.home.idontknow.pro/192.168.0.2
-    - address=/radarr.home.idontknow.pro/192.168.0.2
-    - address=/torrent.home.idontknow.pro/192.168.0.3
-    - address=/plex.home.idontknow.pro/192.168.0.2
-    - address=/pihole.home.idontknow.pro/192.168.0.11
-    - address=/gateway.home.idontknow.pro/192.168.0.1
-    - address=/k3sprimary.home.idontknow.pro/192.168.0.5
-    - address=/k3snode1.home.idontknow.pro/192.168.0.6
-    - address=/k3snode2.home.idontknow.pro/192.168.0.7
-    - address=/k3snode3.home.idontknow.pro/192.168.0.8
-    - address=/k3snode4.home.idontknow.pro/192.168.0.9
-    - address=/lagunahills.asuscomm.com/192.168.0.1
-    - address=/dc01.home.idontknow.pro/192.168.0.16
-    - address=/ca01.home.idontknow.pro/192.168.0.17
-    - address=/portainer.home.idontknow.pro/192.168.0.12
-    - address=/hb.home.idontknow.pro/192.168.0.5
-    - address=/argocd.home.idontknow.pro/192.168.0.13
-    - address=/torrent.home.idontknow.pro/192.168.0.2
+    - address=/sonarr.home.idontknow.pro/192.168.50.2
+    - address=/radarr.home.idontknow.pro/192.168.50.2
+    - address=/torrent.home.idontknow.pro/192.168.50.16
+    - address=/plex.home.idontknow.pro/192.168.50.2
+    - address=/pihole.home.idontknow.pro/192.168.50.11
+    - address=/pihole.home.idontknow.pro/fde0:3fac:9670:50::11
+    - address=/gateway.home.idontknow.pro/192.168.50.1
+    - address=/gateway.home.idontknow.pro/fde0:3fac:9670:50::1
+    - address=/k3sprimary.home.idontknow.pro/192.168.50.5
+    - address=/k3sprimary.home.idontknow.pro/fde0:3fac:9670:50::5
+    - address=/k3snode1.home.idontknow.pro/192.168.50.6
+    - address=/k3snode1.home.idontknow.pro/fde0:3fac:9670:50::6
+    - address=/k3snode2.home.idontknow.pro/192.168.50.7
+    - address=/k3snode2.home.idontknow.pro/fde0:3fac:9670:50::7
+    - address=/lagunahill.asuscomm.com/192.168.50.1
+    - address=/dc01.home.idontknow.pro/192.168.50.16
+    - address=/ca01.home.idontknow.pro/192.168.50.17
+    - address=/hb.home.idontknow.pro/192.168.50.5
 
   additionalHostsEntries:
-    - 192.168.0.1     gateway
-    - 192.168.0.5     k3sprimary
-    - 192.168.0.6     k3snode1
-    - 192.168.0.7     k3snode2
-    - 192.168.0.8     k3snode3
-    - 192.168.0.9     k3snode4
-    - 192.168.0.16    dc01
-    - 192.168.0.17    ca01
-    - 192.168.0.2     2019-MBP-Server-LAN
-    - 192.168.0.3     2019-MBP-Server-Wifi
-    - 192.168.0.11    pihole
+    - 192.168.50.1     gateway
+    - 192.168.50.5     k3sprimary
+    - 192.168.50.6     k3snode1
+    - 192.168.50.7     k3snode2
+    - 192.168.50.16    dc01
+    - 192.168.50.17    ca01
+    - 192.168.50.2     2019-MBP-Server-LAN
+    - 192.168.50.3     livingRoomAP
+    - 192.168.50.11    pihole
+    - fde0:3fac:9670:50::1     gateway
+    - fde0:3fac:9670:50::3     livingRoomAP
+    - fde0:3fac:9670:50::5     k3sprimary
+    - fde0:3fac:9670:50::6     k3snode1
+    - fde0:3fac:9670:50::7     k3snode2
+    - fde0:3fac:9670:50::11    pihole
+    - 192.168.50.4   officeAP
+    - 192.168.50.48   Stellas-Mini
+    - 192.168.50.52   ps5
+    - 192.168.50.71   Upstairs-Thermostat
+    - 192.168.50.74   Henge-Docks-LLC
+    - 192.168.50.94   Living-Room-ATV
+    - 192.168.50.115   HomePod-Mini
+    - 192.168.50.127   Axis-Communications-AB
+    - 192.168.50.149   Main-Bedroom
+    - 192.168.50.159   Paulls-Work-Macbook
+    - 192.168.50.172   Cam-phone
+    - 192.168.50.173   axisDVR
+    - 192.168.50.209   Axis-Communications-AB
+    - 192.168.50.210   downstairsThermostat
+    - 192.168.50.213   doorBell
+    - 192.168.50.247   HomePod-Mini-2
 
 adlists:
   - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
@@ -108,35 +187,27 @@ adlists:
   - https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt
   - https://raw.githubusercontent.com/chadmayfield/my-pihole-blocklists/master/lists/pi_blocklist_porn_top1m.list
   - https://v.firebog.net/hosts/Prigent-Adult.txt
-  - https://github.com/NethServer/dns-community-blacklist/blob/master/easylist.dns
+  # was a github.com/.../blob/... page (HTML, not a list). Raw URL instead:
+  - https://raw.githubusercontent.com/NethServer/dns-community-blacklist/master/easylist.dns
+  # Hagezi: only the "-onlydomains" files are Pi-hole format. The plain wildcard/*.txt files
+  # use "*.domain" lines, which Pi-hole rejects, so those duplicates were removed.
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro.plus-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro.plus.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/fake.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/fake-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nosafesearch.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif-onlydomains.txt
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/popupads-onlydomains.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nosafesearch-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/dyndns.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/dyndns-onlydomains.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/hoster-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/hoster.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/gambling.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/gambling-onlydomains.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.amazon-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.amazon.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok-onlydomains.txt
   - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok.extended-onlydomains.txt
-  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/native.tiktok.extended.txt
-
+  # Encrypted-DNS (DoH/DoT) bypass hostnames, from the IPv6 guide section 8
+  - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/doh-onlydomains.txt
 
 whitelist:
-  - www.bit.ly
+  - www.bit.ly               # was "[www.bit.ly](https://www.bit.ly)" (markdown paste, never matched)
   - bit.ly
   - ow.ly
   - tinyurl.com
@@ -192,7 +263,7 @@ whitelist:
   - static.xx.fbcdn.net
   - star-mini.c10r.facebook.com
   - facebook.com
-  - www.facebook.com
+  - www.facebook.com         # was markdown-link formatted
   - web.facebook.com
   - mobile-collector.newrelic.com.cdn.cloudflare.net
   - mobile-collector.newrelic.com
@@ -207,7 +278,7 @@ whitelist:
   - tracker.cypherpunks.ru
   - coppersurfer.tk
   - browser-intake-datadoghq.com
-  - www.clarity.ms
+  - www.clarity.ms           # was markdown-link formatted
   - watch.primescreenstreams.com
   - trk2.magixflix.club
   - tracker.nwps.ws
@@ -218,29 +289,14 @@ whitelist:
   - iphonesubmissions.apple.com
 
 blacklist:
-   - tp-link.com
-   - ecx.images-amazon.com
-   - cf-st.sc-cdn.net
+  - tp-link.com
+  - ecx.images-amazon.com
+  - cf-st.sc-cdn.net
 
 regex:
   - ^(.+[_.-])?(ads?(erv(er?|ice)?s?|im(age|g)s?|track(er|ing)?|vert(s|is(ing|ements?))?)?|aff(iliat(es?|ion))?|analytics?|banners?|beacons?|count(ers?)?|mads|pixels?|stat(s|istics)?)[0-9]*[_.-]
   - ^(ads|logs|cloudservices).roku.com$
+  # Note: DNS queries never contain "http(s)://", so this next one never matches. Kept as you had it.
   - ^https?://([A-Za-z0-9.-]*\.)?(clicks\.beap\.bc\.yahoo\.com|secure\.footprint\.net|match\.com|sitescout|appnexus|evidon|mediamath|scorecardresearch|doubleclick|flashtalking|turn|mathtag|googlesyndication|s\.yimg\.com/cv/ae/us/audience|yieldmanager|w55c|adnxs|advertising|flashtalking|turn|mathtag|surveylink|info\.yahoo|ads\.yahoo|global\.ard\.yahoo|(.+)\.g00)(\.\w{2}\.\w{2}|\.\w{2,4})?/
   - (^|\.)((xn--.*)|buffpanel\.com|bugsnag\.com|redshell\.io|treasuredata\.com|unity(|3d)\.com|unityads(|\.co)\.com|g00\..*|ad.*\.doubleclick\.net)$
   - \.(ru|cn|ml|ga|gq|cf|tk|pw|ua|ug|ve|info|site|club|host|party)$
-
-ftl:
-  BLOCK_ICLOUD_PR: true
-  SHOW_DNSSEC: true
-  DELAY_STARTUP: 60
-  IGNORE_LOCALHOST: yes
-  PIHOLE_PTR: HOSTNAME
-  REFRESH_HOSTNAMES: ALL
-  PARSE_ARP_CACHE: true
-
-podDnsConfig:
-  enabled: true
-  policy: "None"
-  nameservers:
-    - 127.0.0.1
-    - 1.1.1.1
