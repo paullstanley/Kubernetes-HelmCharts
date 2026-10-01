@@ -78,7 +78,7 @@ configmap:
         apt-get install -y ffmpeg ffmpeg-libs libpcap-dev
 
         npm install homebridge-camera-ffmpeg
-        npm install homebridge-tplink-smarthome
+        npm install homebridge-kasa-python
         npm install homebridge-wyze-smart-home
         npm install homebridge-wiz-lan
         
