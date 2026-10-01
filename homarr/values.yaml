@@ -10,7 +10,7 @@ image:
   # -- Image repository
   repository: ghcr.io/ajnart/homarr
   # -- Image pull policy
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # -- Overrides the image tag whose default is the chart appVersion
   tag: "latest"
 
