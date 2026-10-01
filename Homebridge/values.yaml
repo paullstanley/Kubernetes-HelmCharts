@@ -10,7 +10,7 @@
 image:
   repository: ghcr.io/oznu/homebridge
   tag: "latest"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 env:
   TZ: America/New_York
