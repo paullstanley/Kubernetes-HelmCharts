@@ -13,8 +13,8 @@ replicaCount: 1
 # installs are repeatable.
 image:
   repository: ghcr.io/seerr-team/seerr
-  tag: "Latest"
-  pullPolicy: IfNotPresent
+  tag: "latest"
+  pullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
